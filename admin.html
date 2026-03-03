@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moreirart — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --white:    #ffffff;
+      --gray-50:  #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --red:      #dc2626;
+    }
+
+    body { font-family: 'Poppins', sans-serif; background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .login-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 340px; text-align: center; }
+    .login-card h1 { font-size: 1.4rem; font-weight: 300; margin-bottom: 0.2rem; }
+    .login-card p  { font-size: 0.75rem; color: var(--gray-400); margin-bottom: 1.75rem; }
+    .login-error { color: var(--red); font-size: 0.72rem; margin-top: 0.6rem; display: none; }
+
+    /* ── APP ── */
+    #app { display: none; }
+    .app-header { position: fixed; top: 0; width: 100%; background: var(--white); border-bottom: 1px solid var(--gray-200); z-index: 50; padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .app-brand { font-size: 0.875rem; font-weight: 500; }
+    .app-brand span { font-weight: 300; color: var(--gray-400); }
+    .app-body { max-width: 700px; margin: 0 auto; padding: 5rem 1.5rem 4rem; }
+
+    .section-label { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-400); margin-bottom: 0.9rem; }
+    .card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 1.35rem 1.25rem; margin-bottom: 1.75rem; }
+
+    /* month nav */
+    .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .month-nav-label { font-size: 1rem; font-weight: 300; letter-spacing: -0.01em; }
+    .icon-btn { width: 34px; height: 34px; border: 1px solid var(--gray-200); border-radius: 8px; background: var(--white); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--gray-700); transition: border-color 0.15s; }
+    .icon-btn:hover { border-color: var(--gray-700); }
+    .icon-btn:disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
+
+    /* slots */
+    .slots-hint { font-size: 0.68rem; color: var(--gray-400); text-align: center; margin-bottom: 1rem; }
+    .slots-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+    @media (max-width: 460px) { .slots-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .slot { background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; padding: 0.9rem 0.4rem; text-align: center; cursor: pointer; transition: all 0.16s; user-select: none; position: relative; }
+    .slot:hover { border-color: var(--gray-700); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
+    .slot.filled { border-color: var(--gray-900); background: var(--gray-900); }
+    .slot.filled:hover { background: var(--gray-700); }
+
+    .slot-day   { font-size: 1.4rem; font-weight: 300; line-height: 1; color: var(--gray-200); }
+    .slot-month { font-size: 0.58rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray-200); margin-top: 0.18rem; }
+    .slot-plus  { font-size: 0.62rem; color: var(--gray-300); margin-top: 0.15rem; }
+    .slot.filled .slot-day   { color: var(--white); }
+    .slot.filled .slot-month { color: rgba(255,255,255,0.5); }
+    .slot-edit { position: absolute; top: 0.35rem; right: 0.35rem; font-size: 0.55rem; color: rgba(255,255,255,0.4); opacity: 0; transition: opacity 0.15s; }
+    .slot.filled:hover .slot-edit { opacity: 1; }
+
+    /* preview */
+    .preview-strip { padding-top: 0.9rem; border-top: 1px solid var(--gray-200); margin-top: 0.5rem; }
+    .preview-label-row { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-400); margin-bottom: 0.55rem; }
+    .dates-row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+    .date-pill { display: inline-flex; flex-direction: column; align-items: center; padding: 0.42rem 0.7rem; border: 1px solid var(--gray-200); border-radius: 8px; background: var(--white); min-width: 48px; }
+    .pill-day   { font-size: 0.95rem; font-weight: 300; line-height: 1; }
+    .pill-month { font-size: 0.52rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray-400); margin-top: 0.12rem; }
+    .preview-empty { font-size: 0.72rem; color: var(--gray-400); font-style: italic; }
+
+    /* msg editor */
+    .msg-textarea { width: 100%; border: 1px solid var(--gray-200); border-radius: 8px; padding: 0.65rem 0.85rem; font-family: 'Poppins', sans-serif; font-size: 0.8rem; color: var(--gray-900); background: var(--gray-50); outline: none; resize: vertical; min-height: 90px; line-height: 1.5; transition: border-color 0.15s; }
+    .msg-textarea:focus { border-color: var(--gray-900); background: var(--white); }
+    .msg-hint { font-size: 0.65rem; color: var(--gray-400); margin-top: 0.45rem; }
+    .msg-hint code { background: var(--gray-100); padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .saving-indicator { font-size: 0.68rem; color: var(--gray-400); display: none; }
+
+    /* buttons */
+    .btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.6rem 1.1rem; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.78rem; font-weight: 500; border: none; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: var(--gray-900); color: var(--white); }
+    .btn-primary:hover { background: var(--gray-700); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-ghost  { background: none; color: var(--gray-500); border: 1px solid var(--gray-200); }
+    .btn-ghost:hover  { border-color: var(--gray-500); color: var(--gray-900); }
+    .btn-danger { background: none; color: var(--red); border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: #fef2f2; }
+    .btn-sm   { padding: 0.4rem 0.75rem; font-size: 0.7rem; }
+    .btn-full { width: 100%; justify-content: center; }
+
+    input[type="password"] { width: 100%; border: 1px solid var(--gray-200); border-radius: 8px; padding: 0.6rem 0.85rem; font-family: 'Poppins', sans-serif; font-size: 0.875rem; color: var(--gray-900); background: var(--gray-50); outline: none; transition: border-color 0.15s; margin-bottom: 0.75rem; }
+    input[type="password"]:focus { border-color: var(--gray-900); background: var(--white); }
+    label { display: block; font-size: 0.68rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-500); margin-bottom: 0.3rem; }
+
+    .logout-btn { font-size: 0.72rem; color: var(--gray-400); background: none; border: none; cursor: pointer; font-family: 'Poppins', sans-serif; padding: 0.25rem 0.5rem; border-radius: 4px; }
+    .logout-btn:hover { color: var(--gray-900); background: var(--gray-100); }
+
+    /* calendar overlay */
+    .cal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .cal-overlay.open { opacity: 1; pointer-events: all; }
+    .cal-card { background: var(--white); border-radius: 16px; padding: 1.4rem; width: 100%; max-width: 300px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); transform: translateY(10px) scale(0.97); transition: transform 0.22s ease; }
+    .cal-overlay.open .cal-card { transform: translateY(0) scale(1); }
+    .cal-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .cal-month-label { font-size: 0.875rem; font-weight: 500; }
+    .cal-nav { display: flex; gap: 0.3rem; }
+    .cal-nav-btn { width: 28px; height: 28px; border: 1px solid var(--gray-200); border-radius: 6px; background: none; cursor: pointer; font-size: 0.85rem; color: var(--gray-700); display: flex; align-items: center; justify-content: center; transition: border-color 0.13s; }
+    .cal-nav-btn:hover { border-color: var(--gray-700); }
+    .cal-nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+    .cal-weekdays { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 0.3rem; }
+    .cal-wd { text-align: center; font-size: 0.58rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); padding: 0.2rem 0; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+    .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.78rem; cursor: pointer; color: var(--gray-700); border: 1px solid transparent; transition: all 0.12s; }
+    .cal-day:hover { background: var(--gray-100); }
+    .cal-day.today { border-color: var(--gray-200); font-weight: 600; }
+    .cal-day.selected { background: var(--gray-900); color: var(--white); }
+    .cal-day.selected:hover { background: var(--gray-700); }
+    .cal-day.past { color: var(--gray-200); cursor: not-allowed; pointer-events: none; }
+    .cal-day.empty { cursor: default; pointer-events: none; }
+    .cal-selected-info { text-align: center; font-size: 0.7rem; color: var(--gray-500); margin-top: 0.6rem; min-height: 1rem; }
+    .cal-selected-info strong { color: var(--gray-900); }
+    .cal-actions { display: flex; gap: 0.4rem; margin-top: 0.85rem; justify-content: flex-end; }
+
+    /* toast */
+    #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--gray-900); color: var(--white); padding: 0.58rem 1.1rem; border-radius: 8px; font-size: 0.76rem; font-weight: 500; transition: transform 0.22s ease; z-index: 300; pointer-events: none; white-space: nowrap; }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.err  { background: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Moreirart</h1>
+    <p>Admin — availability manager</p>
+    <label for="pwd">Password</label>
+    <input type="password" id="pwd" placeholder="Enter password" autocomplete="current-password">
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Enter</button>
+    <div class="login-error" id="login-error">Wrong password. Try again.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-header">
+    <div class="app-brand">Moreirart <span>/ availability</span></div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="app-body">
+
+    <div class="section-label">Availability slots</div>
+    <div class="card">
+      <div class="month-nav">
+        <button class="icon-btn" id="prev-btn" onclick="changeMonth(-1)">‹</button>
+        <div class="month-nav-label" id="month-label">—</div>
+        <button class="icon-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="slots-hint">Tap an empty slot to add a date · tap a filled slot to edit or remove</div>
+      <div class="slots-grid" id="slots-grid"></div>
+      <div class="preview-strip">
+        <div class="preview-label-row">Preview — as seen on site · <span id="preview-month-name">—</span></div>
+        <div class="dates-row" id="preview-row"></div>
+      </div>
+    </div>
+
+    <div class="section-label">WhatsApp booking message</div>
+    <div class="card">
+      <textarea class="msg-textarea" id="msg-textarea" placeholder="Loading..."></textarea>
+      <div class="msg-hint">Use <code>{DATE}</code> where the date should appear — e.g. "March 14th"</div>
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.85rem;">
+        <button class="btn btn-primary btn-sm" onclick="saveMessage()">Save message</button>
+        <span class="saving-indicator" id="saving-indicator">Saving…</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CALENDAR OVERLAY -->
+<div class="cal-overlay" id="cal-overlay" onclick="overlayClick(event)">
+  <div class="cal-card" id="cal-card">
+    <div class="cal-top">
+      <div class="cal-month-label" id="cal-label">—</div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" id="cal-prev" onclick="calNav(-1)">‹</button>
+        <button class="cal-nav-btn" id="cal-next" onclick="calNav(1)">›</button>
+      </div>
+    </div>
+    <div class="cal-weekdays">
+      <div class="cal-wd">Su</div><div class="cal-wd">Mo</div>
+      <div class="cal-wd">Tu</div><div class="cal-wd">We</div>
+      <div class="cal-wd">Th</div><div class="cal-wd">Fr</div>
+      <div class="cal-wd">Sa</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-selected-info" id="cal-info">No date selected</div>
+    <div class="cal-actions">
+      <button class="btn btn-danger btn-sm" id="cal-remove-btn" onclick="removeDate()" style="display:none; margin-right:auto">Remove</button>
+      <button class="btn btn-ghost btn-sm" onclick="calClose()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="cal-confirm-btn" onclick="calConfirm()" disabled>Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL   = 'https://tweiotqxxgehsohrvquf.supabase.co';
+const SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3ZWlvdHF4eGdlaHNvaHJ2cXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0OTI5MTksImV4cCI6MjA4ODA2ODkxOX0.XCkY2byRdNMSvdkBxTJT9jtUyOB2L49cpWgdQbxp96s';
+const ADMIN_PASSWORD = 'Apprecielectric2025';
+const MAX_SLOTS      = 8;
+
+const MONTHS       = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DEFAULT_WA_MESSAGE = "Hi Thiago! I'd love to book a tattoo session with you on {DATE}. Could you let me know how to move forward? Looking forward to it!";
+
+// AUTH
+function doLogin() {
+  if (document.getElementById('pwd').value === ADMIN_PASSWORD) {
+    sessionStorage.setItem('ma_auth','1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+document.getElementById('pwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+function logout() { sessionStorage.removeItem('ma_auth'); location.reload(); }
+if (sessionStorage.getItem('ma_auth') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// SUPABASE
+const SB_H = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+async function sb(path, opts = {}) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: SB_H, ...opts });
+  if (r.status === 204 || r.status === 200 && opts.method === 'DELETE') return null;
+  return r.json();
+}
+
+// STATE
+const today = new Date(); today.setHours(0,0,0,0);
+const todayStr = today.toISOString().split('T')[0];
+let viewYear = today.getFullYear(), viewMonth = today.getMonth();
+let allDates = new Set();
+let calSlotDate = null, calPicked = null, calViewYear = 0, calViewMonth = 0;
+
+// INIT
+async function init() {
+  await Promise.all([loadAllDates(), loadMessage()]);
+  renderMonth();
+}
+
+async function loadAllDates() {
+  const rows = await sb('availability?select=date&order=date.asc');
+  allDates = new Set((rows || []).map(r => r.date));
+}
+
+// MONTH
+function changeMonth(dir) {
+  viewMonth += dir;
+  if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
+  if (viewMonth > 11) { viewMonth = 0;  viewYear++; }
+  renderMonth();
+}
+
+function renderMonth() {
+  const isCurrent = viewYear === today.getFullYear() && viewMonth === today.getMonth();
+  document.getElementById('prev-btn').disabled = isCurrent;
+  document.getElementById('month-label').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+  document.getElementById('preview-month-name').textContent = MONTHS[viewMonth];
+
+  const prefix = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-`;
+  const monthDates = [...allDates].filter(d => d.startsWith(prefix)).sort();
+
+  renderSlots(monthDates);
+  renderPreview(monthDates);
+}
+
+function renderSlots(monthDates) {
+  const grid = document.getElementById('slots-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const dateStr = monthDates[i] || null;
+    const el = document.createElement('div');
+    el.className = 'slot' + (dateStr ? ' filled' : '');
+    el.onclick = () => openCal(dateStr);
+    if (dateStr) {
+      const d = new Date(dateStr + 'T12:00:00');
+      el.innerHTML = `<div class="slot-edit">✎</div><div class="slot-day">${d.getDate()}</div><div class="slot-month">${MONTHS_SHORT[d.getMonth()]}</div>`;
+    } else {
+      el.innerHTML = `<div class="slot-day" style="font-size:1.1rem;color:#d1d5db">+</div><div class="slot-plus">add</div>`;
+    }
+    grid.appendChild(el);
+  }
+}
+
+function renderPreview(monthDates) {
+  const row = document.getElementById('preview-row');
+  row.innerHTML = '';
+  if (!monthDates.length) {
+    row.innerHTML = '<span class="preview-empty">No dates set this month</span>'; return;
+  }
+  monthDates.forEach(dateStr => {
+    const d = new Date(dateStr + 'T12:00:00');
+    const el = document.createElement('div');
+    el.className = 'date-pill';
+    el.innerHTML = `<span class="pill-day">${d.getDate()}</span><span class="pill-month">${MONTHS_SHORT[d.getMonth()]}</span>`;
+    row.appendChild(el);
+  });
+}
+
+// CALENDAR
+function openCal(existingDateStr) {
+  calSlotDate = existingDateStr;
+  calPicked   = existingDateStr || null;
+  calViewYear  = viewYear;
+  calViewMonth = viewMonth;
+  document.getElementById('cal-remove-btn').style.display = existingDateStr ? 'inline-flex' : 'none';
+  document.getElementById('cal-confirm-btn').disabled = !existingDateStr;
+  renderCal();
+  document.getElementById('cal-overlay').classList.add('open');
+}
+
+function calClose() {
+  document.getElementById('cal-overlay').classList.remove('open');
+  calSlotDate = null; calPicked = null;
+}
+
+function overlayClick(e) { if (e.target === document.getElementById('cal-overlay')) calClose(); }
+
+function calNav(dir) {
+  calViewMonth += dir;
+  if (calViewMonth < 0)  { calViewMonth = 11; calViewYear--; }
+  if (calViewMonth > 11) { calViewMonth = 0;  calViewYear++; }
+  renderCal();
+}
+
+function renderCal() {
+  const isNow = calViewYear === today.getFullYear() && calViewMonth === today.getMonth();
+  document.getElementById('cal-prev').disabled = isNow;
+  document.getElementById('cal-label').textContent = `${MONTHS[calViewMonth]} ${calViewYear}`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  const firstDay    = new Date(calViewYear, calViewMonth, 1).getDay();
+  const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day empty'; grid.appendChild(el);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds   = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const past = ds < todayStr;
+    const el   = document.createElement('div');
+    el.textContent = d;
+    el.className = 'cal-day' + (past ? ' past' : '') + (ds === todayStr ? ' today' : '') + (ds === calPicked ? ' selected' : '');
+    if (!past) el.onclick = () => { calPicked = ds; document.getElementById('cal-confirm-btn').disabled = false; renderCal(); };
+    grid.appendChild(el);
+  }
+
+  const info = document.getElementById('cal-info');
+  if (calPicked) {
+    const d = new Date(calPicked + 'T12:00:00');
+    const s = [,'st','nd','rd'][d.getDate()] || 'th';
+    info.innerHTML = `Selected: <strong>${MONTHS[d.getMonth()]} ${d.getDate()}${s}</strong>`;
+  } else {
+    info.textContent = 'No date selected';
+  }
+}
+
+async function calConfirm() {
+  if (!calPicked) return;
+  if (calSlotDate && calSlotDate !== calPicked) {
+    await sb(`availability?date=eq.${calSlotDate}`, { method: 'DELETE' });
+    allDates.delete(calSlotDate);
+  }
+  if (!allDates.has(calPicked)) {
+    await sb('availability', { method: 'POST', body: JSON.stringify({ date: calPicked }) });
+    allDates.add(calPicked);
+  }
+  calClose(); renderMonth(); toast('Date saved ✓');
+}
+
+async function removeDate() {
+  if (!calSlotDate) return;
+  await sb(`availability?date=eq.${calSlotDate}`, { method: 'DELETE' });
+  allDates.delete(calSlotDate);
+  calClose(); renderMonth(); toast('Date removed');
+}
+
+// MESSAGE
+async function loadMessage() {
+  const rows = await sb('settings?key=eq.whatsapp_message');
+  document.getElementById('msg-textarea').value = rows?.[0]?.value || DEFAULT_WA_MESSAGE;
+}
+
+async function saveMessage() {
+  const value = document.getElementById('msg-textarea').value.trim();
+  if (!value) { toast('Message cannot be empty', true); return; }
+  const ind = document.getElementById('saving-indicator');
+  ind.style.display = 'inline';
+  const payload = { value, updated_at: new Date().toISOString() };
+  const updated = await sb('settings?key=eq.whatsapp_message', { method: 'PATCH', body: JSON.stringify(payload) });
+  if (!updated || !updated.length) {
+    await sb('settings', { method: 'POST', body: JSON.stringify({ key: 'whatsapp_message', ...payload }) });
+  }
+  ind.style.display = 'none';
+  toast('Message saved ✓');
+}
+
+// TOAST
+let tt;
+function toast(msg, err = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show' + (err ? ' err' : '');
+  clearTimeout(tt); tt = setTimeout(() => { el.className = ''; }, 2400);
+}
+
+if (sessionStorage.getItem('ma_auth') === '1') init();
+</script>
+</body>
+</html>
